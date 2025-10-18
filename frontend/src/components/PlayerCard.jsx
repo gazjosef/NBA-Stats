@@ -1,4 +1,4 @@
-import React from "react";
+import { useState } from "react";
 // eslint-disable-next-line no-unused-vars
 import { motion } from "framer-motion";
 
@@ -12,57 +12,75 @@ export default function PlayerCard({
   player,
   accent = "blue",
 }) {
-  const accentBg =
-    accent === "orange"
-      ? "bg-orange-50 border-orange-200"
-      : "bg-blue-50 border-blue-200";
-  const accentText = accent === "orange" ? "text-orange-700" : "text-blue-700";
+  const [input, setInput] = useState(name);
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    onNameChange(input);
+    onFetch();
+  };
 
   return (
-    <motion.div layout className={`rounded-xl border p-4 ${accentBg}`}>
-      <div className="flex items-center justify-between mb-3">
-        <h4 className={`font-semibold ${accentText}`}>{title}</h4>
-        <button
-          onClick={onFetch}
-          disabled={loading}
-          className="px-3 py-1 bg-slate-800 text-white rounded hover:bg-slate-900"
-        >
-          {loading ? "..." : "Fetch"}
-        </button>
-      </div>
+    <motion.div
+      className={`p-4 bg-white rounded-2xl shadow border-t-4 border-${accent}-500`}
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+    >
+      <h3 className="font-semibold text-slate-700 mb-3">{title}</h3>
 
-      <input
-        value={name}
-        onChange={(e) => onNameChange(e.target.value)}
-        placeholder="Full name (e.g. LeBron James)"
-        className="w-full rounded px-3 py-2 mb-3 border focus:outline-none focus:ring-2 focus:ring-blue-400"
-      />
-
-      {error && <div className="text-sm text-red-600 mb-2">{error}</div>}
-
-      {player ? (
-        <div className="text-sm text-slate-700 space-y-1">
-          <div className="font-medium">{player.player}</div>
-          <div className="text-slate-500 text-xs">
-            Team: {player.team} • Season: {player.season}
+      {/* Player image + details */}
+      {player && (
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-16 h-16 rounded-full overflow-hidden border border-slate-200 bg-slate-100 flex-shrink-0">
+            <img
+              src={player.image}
+              alt={player.player}
+              className="w-full h-full object-cover"
+              onError={(e) => {
+                e.target.src =
+                  "https://cdn.nba.com/headshots/nba/latest/1040x760/placeholder.png";
+              }}
+            />
           </div>
-          <div className="mt-2 text-sm">
-            <div>
-              PTS: <strong>{player.points}</strong>
+          <div>
+            <div className="font-bold text-slate-800 text-lg">
+              {player.player}
             </div>
-            <div>
-              REB: <strong>{player.rebounds}</strong>
-            </div>
-            <div>
-              AST: <strong>{player.assists}</strong>
-            </div>
-            <div>
-              Fantasy: <strong>{player.fantasy_score}</strong>
+            <div className="text-sm text-slate-500">
+              {player.team} — {player.season}
             </div>
           </div>
         </div>
-      ) : (
-        <div className="text-sm text-slate-500">No player loaded</div>
+      )}
+
+      {/* Input form */}
+      <form onSubmit={handleSubmit} className="flex flex-col gap-2">
+        <input
+          type="text"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          placeholder="Enter NBA player name"
+          className="border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-slate-400 focus:outline-none"
+        />
+        <button
+          type="submit"
+          disabled={loading}
+          className={`px-3 py-2 text-white font-medium rounded-lg transition ${
+            loading
+              ? "bg-slate-400 cursor-not-allowed"
+              : `bg-${accent}-600 hover:bg-${accent}-700`
+          }`}
+        >
+          {loading ? "Loading..." : "Fetch Player"}
+        </button>
+      </form>
+
+      {/* Error message */}
+      {error && (
+        <div className="mt-2 text-sm text-red-600 bg-red-50 p-2 rounded">
+          {error}
+        </div>
       )}
     </motion.div>
   );

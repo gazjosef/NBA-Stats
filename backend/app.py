@@ -1,12 +1,14 @@
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 import requests
+from nba_api.stats.static import players  # ✅ Added
 
 app = Flask(__name__)
 CORS(app, resources={r"/api/*": {"origins": "http://localhost:5173"}})
 
+
 def get_headers():
-    """Headers to make NBA API requests work"""
+    """Headers required for NBA Stats API requests."""
     return {
         "Host": "stats.nba.com",
         "User-Agent": (
@@ -19,11 +21,22 @@ def get_headers():
         "Origin": "https://www.nba.com",
     }
 
+
 def safe_float(value):
+    """Safely convert values to float."""
     try:
         return float(value)
     except (TypeError, ValueError):
         return 0.0
+
+
+def get_player_id(player_name):
+    """Use nba_api to find a player's ID."""
+    player_results = players.find_players_by_full_name(player_name)
+    if player_results:
+        return player_results[0]["id"], player_results[0]["full_name"]
+    return None, None
+
 
 @app.route("/api/stats", methods=["GET"])
 def get_player_stats():
@@ -35,59 +48,31 @@ def get_player_stats():
 
     print(f"Fetching NBA stats for: {player_name} ({season})")
 
-    def fetch_player(is_current_season="1"):
-        url = "https://stats.nba.com/stats/commonallplayers"
-        params = {"LeagueID": "00", "Season": season, "IsOnlyCurrentSeason": is_current_season}
+    player_id, full_name = get_player_id(player_name)
+    if not player_id:
+        return jsonify({"error": f"Player '{player_name}' not found"}), 404
+
+    try:
+        # Get player career stats
+        url = "https://stats.nba.com/stats/playercareerstats"
+        params = {"PerMode": "PerGame", "PlayerID": player_id}
         res = requests.get(url, headers=get_headers(), params=params)
         res.raise_for_status()
         data = res.json()
+
         headers = data["resultSets"][0]["headers"]
         rows = data["resultSets"][0]["rowSet"]
-        return [dict(zip(headers, row)) for row in rows]
-
-    try:
-        # Try current players first
-        players = fetch_player("1")
-        player = next((p for p in players if player_name.lower() in p["DISPLAY_FIRST_LAST"].lower()), None)
-
-        # If not found, retry with all players (including retired)
-        if not player:
-            print("Retrying with IsOnlyCurrentSeason=0...")
-            players = fetch_player("0")
-            player = next((p for p in players if player_name.lower() in p["DISPLAY_FIRST_LAST"].lower()), None)
-
-        if not player:
-            return jsonify({"error": f"Player '{player_name}' not found"}), 404
-
-        player_id = player["PERSON_ID"]
-
-        # Get player career stats
-        career_url = "https://stats.nba.com/stats/playercareerstats"
-        params = {"PerMode": "PerGame", "PlayerID": player_id}
-        stats_res = requests.get(career_url, headers=get_headers(), params=params)
-        stats_res.raise_for_status()
-        stats_data = stats_res.json()
-
-        headers = stats_data["resultSets"][0]["headers"]
-        rows = stats_data["resultSets"][0]["rowSet"]
         stats_list = [dict(zip(headers, row)) for row in rows]
 
-        # Match season by first two digits (e.g. "2023-24" → "23")
-        target_year = season.split("-")[0][-2:]
+        # Match the correct season (NBA format uses "2023-24" → "2023-24")
         current_stats = next(
-            (s for s in stats_list if s["SEASON_ID"].endswith(target_year)),
-            None,
+            (s for s in stats_list if season in s["SEASON_ID"]), None
         )
 
         if not current_stats:
             return jsonify({"error": "No stats found for this season"}), 404
 
-        def safe_float(value):
-            try:
-                return float(value)
-            except (TypeError, ValueError):
-                return 0.0
-
+        # Compute fantasy score
         fantasy_score = (
             safe_float(current_stats.get("PTS"))
             + 1.2 * safe_float(current_stats.get("REB"))
@@ -97,8 +82,11 @@ def get_player_stats():
             - safe_float(current_stats.get("TOV"))
         )
 
+        # Construct image URL
+        image_url = f"https://cdn.nba.com/headshots/nba/latest/1040x760/{player_id}.png"
+
         return jsonify({
-            "player": player["DISPLAY_FIRST_LAST"],
+            "player": full_name,
             "team": current_stats.get("TEAM_ABBREVIATION", "N/A"),
             "season": season,
             "points": current_stats.get("PTS"),
@@ -108,6 +96,7 @@ def get_player_stats():
             "blocks": current_stats.get("BLK"),
             "turnovers": current_stats.get("TOV"),
             "fantasy_score": round(fantasy_score, 2),
+            "image": image_url,  # ✅ added
         })
 
     except Exception as e:
