@@ -3,7 +3,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 
 export default function PlayerCard({
-  title,
+  // title,
   name,
   onNameChange,
   onFetch,
@@ -22,16 +22,17 @@ export default function PlayerCard({
 
   return (
     <motion.div
-      className={`p-4 bg-white rounded-2xl shadow border-t-4 border-${accent}-500`}
+      className={`px-4 bg-white rounded-2xl shadow border-t-4`}
+      style={{ borderTopColor: accent }}
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
     >
-      <h3 className="font-semibold text-slate-700 mb-3">{title}</h3>
+      {/* <h3 className="font-semibold text-slate-700 mb-3">{title}</h3> */}
 
       {/* Player image + details */}
       {player && (
-        <div className="flex items-center gap-3 mb-4">
+        <div className="flex items-center justify-center gap-3 mb-4">
           <div className="w-16 h-16 rounded-full overflow-hidden border border-slate-200 bg-slate-100 flex-shrink-0">
             <img
               src={player.image}
