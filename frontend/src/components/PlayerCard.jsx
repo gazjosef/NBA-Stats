@@ -2,6 +2,14 @@ import { useState } from "react";
 // eslint-disable-next-line no-unused-vars
 import { motion } from "framer-motion";
 
+const accentClasses = {
+  blue: "bg-blue-600 hover:bg-blue-700",
+  red: "bg-red-600 hover:bg-red-700",
+  green: "bg-green-600 hover:bg-green-700",
+  orange: "bg-orange-600 hover:bg-orange-700",
+  purple: "bg-purple-600 hover:bg-purple-700",
+};
+
 export default function PlayerCard({
   // title,
   name,
@@ -22,7 +30,7 @@ export default function PlayerCard({
 
   return (
     <motion.div
-      className={`px-4 bg-white rounded-2xl shadow border-t-4`}
+      className={`p-4 bg-white rounded-2xl shadow border-t-4`}
       style={{ borderTopColor: accent }}
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
@@ -70,7 +78,7 @@ export default function PlayerCard({
           className={`px-3 py-2 text-white font-medium rounded-lg transition ${
             loading
               ? "bg-slate-400 cursor-not-allowed"
-              : `bg-${accent}-600 hover:bg-${accent}-700`
+              : accentClasses[accent] || "bg-slate-800 hover:bg-slate-900"
           }`}
         >
           {loading ? "Loading..." : "Fetch Player"}

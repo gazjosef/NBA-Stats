@@ -161,36 +161,24 @@ export default function App() {
       <main className="max-w-6xl mx-auto grid gap-6">
         {/* Controls & player inputs */}
         <section className="grid md:grid-cols-3 gap-4 items-end">
-          <div className="md:col-span-2 grid md:grid-cols-2 gap-4">
-            <PlayerCard
-              title="Player 1"
-              name={p1Name}
-              onNameChange={setP1Name}
-              onFetch={() =>
-                fetchPlayer(p1Name, season, setP1, setLoading1, setErr1)
-              }
-              loading={loading1}
-              error={err1}
-              player={p1}
-              accent="blue"
-            />
-            <PlayerCard
-              title="Player 2"
-              name={p2Name}
-              onNameChange={setP2Name}
-              onFetch={() =>
-                fetchPlayer(p2Name, season, setP2, setLoading2, setErr2)
-              }
-              loading={loading2}
-              error={err2}
-              player={p2}
-              accent="orange"
-            />
-          </div>
+          <PlayerCard
+            name={p1Name}
+            onNameChange={setP1Name}
+            onFetch={() =>
+              fetchPlayer(p1Name, season, setP1, setLoading1, setErr1)
+            }
+            loading={loading1}
+            error={err1}
+            player={p1}
+            accent="blue"
+          />
 
-          <div className="flex flex-col gap-3 items-start">
-            <label className="text-sm text-slate-600">Season</label>
+          <div className="h-full flex flex-col gap-3 items-center justify-center p-4">
+            <label htmlFor="season" className="text-sm text-slate-600">
+              Season
+            </label>
             <select
+              id="season"
               value={season}
               onChange={(e) => setSeason(e.target.value)}
               className="border rounded px-3 py-2"
@@ -210,6 +198,18 @@ export default function App() {
               Refresh both
             </button>
           </div>
+
+          <PlayerCard
+            name={p2Name}
+            onNameChange={setP2Name}
+            onFetch={() =>
+              fetchPlayer(p2Name, season, setP2, setLoading2, setErr2)
+            }
+            loading={loading2}
+            error={err2}
+            player={p2}
+            accent="orange"
+          />
         </section>
 
         {/* All-stats display side-by-side */}
